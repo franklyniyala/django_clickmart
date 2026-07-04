@@ -14,6 +14,12 @@ from pathlib import Path
 from datetime import timedelta
 from decouple import config
 
+
+def get_list(value, default=None):
+    if value is None or value == "":
+        return default or []
+    return [item.strip() for item in value.split(",") if item.strip()]
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -27,7 +33,8 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = get_list(config('ALLOWED_HOSTS', default='localhost,127.0.0.1,0.0.0.0,backend,clickmart_backend'), [])
+CSRF_TRUSTED_ORIGINS = get_list(config('CSRF_TRUSTED_ORIGINS', default='http://localhost,http://127.0.0.1,http://localhost:80,http://127.0.0.1:80'), [])
 
 # Application definition
 
@@ -82,23 +89,25 @@ WSGI_APPLICATION = 'clickmart_main.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
+# For development, using SQLite. For production, use PostgreSQL:
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT')
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# PostgreSQL configuration (uncomment for production)
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': config('DB_NAME'),
+#         'USER': config('DB_USER'),
+#         'PASSWORD': config('DB_PASSWORD'),
+#         'HOST': config('DB_HOST'),
+#         'PORT': config('DB_PORT')
+#     }
+# }
 
 
 # Password validation

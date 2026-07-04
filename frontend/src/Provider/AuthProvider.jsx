@@ -7,7 +7,7 @@ const AuthProvider = ({ children }) => {
     refreshToken: localStorage.getItem("refreshToken"),
   });
 
-  return <AuthContext value={{ auth, setAuth }}>{children}</AuthContext>;
+  return <AuthContext.Provider value={{ auth, setAuth }}>{children}</AuthContext.Provider>;
 };
 
 export default AuthProvider;
