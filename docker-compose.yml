@@ -1,0 +1,64 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5433:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend-drf
+      dockerfile: Dockerfile
+    image: clickmart_backend:latest
+    container_name: clickmart_backend
+    environment:
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: db
+      DB_PORT: 5432
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./backend-drf:/app
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: clickmart_frontend:latest
+    container_name: clickmart_frontend
+    environment:
+      - REACT_APP_API_URL=http://localhost:8001
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend:/app
+    depends_on:
+      - backend
+
+volumes:
+  db_data:
+      
+
+
+
+
+
+
+
+    
+
+    
+
+
+
+
