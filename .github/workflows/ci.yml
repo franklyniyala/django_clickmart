@@ -42,11 +42,13 @@ jobs:
 
     steps:
 
-      - name: Install PostgreSQL Client
-        run: sudo apt-get install postgresql-client
-
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Install PostgreSQL Client
+        run: | 
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
 
       - name: Set up Python
         uses: actions/setup-python@v5
