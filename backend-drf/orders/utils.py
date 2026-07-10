@@ -2,10 +2,9 @@ from django.core.mail import send_mail
 from django.conf import settings
 
 
-
 def send_order_notification(order):
     send_mail(
-        subject=f'Order #{order.id} is received',
+        subject=f"Order #{order.id} is received",
         message=f"""
             Hi {order.user.first_name},
 
@@ -17,5 +16,5 @@ def send_order_notification(order):
         """,
         from_email=settings.EMAIL_HOST_USER,
         recipient_list=[order.user.email],
-        fail_silently=False
+        fail_silently=False,
     )
