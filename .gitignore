@@ -1,6 +1,6 @@
 # Created by https://www.toptal.com/developers/gitignore/api/django
 # Edit at https://www.toptal.com/developers/gitignore?templates=django
-
+zxz
 ### Django ###
 *.log
 *.pot
@@ -171,9 +171,80 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-# End of https://www.toptal.com/developers/gitignore/api/django
-frontend/Dockerfile
-backend-drf/.env.docker
-backend-drf/.env.production
-backend-drf/Dockerfile
-docker-compose.yml
+
+####################################
+# Python
+####################################
+backend-drf/venv/
+backend-drf/__pycache__/
+backend-drf/**/*.pyc
+backend-drf/*.sqlite3
+
+####################################
+# Django
+####################################
+backend-drf/staticfiles/
+backend-drf/media/
+
+####################################
+# Node
+####################################
+frontend/node_modules/
+frontend/dist/
+
+
+####################################
+# VS Code
+####################################
+.vscode/
+
+####################################
+# JetBrains
+####################################
+.idea/
+
+####################################
+# macOS
+####################################
+.DS_Store
+
+####################################
+# Linux
+####################################
+*~
+
+####################################
+# Logs
+####################################
+*.log
+
+####################################
+# Docker
+####################################
+docker-compose.override.yml
+
+####################################
+# Testing
+####################################
+.pytest_cache/
+.coverage
+htmlcov/
+
+####################################
+# Build
+####################################
+build/
+
+# Django
+backend-drf/staticfiles/
+backend-drf/media/
+backend-drf/db.sqlite3
+
+# Environment
+.env
+backend-drf/.env
+frontend/.env
+
+# OS
+.DS_Store
+Thumbs.db
