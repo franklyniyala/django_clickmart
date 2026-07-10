@@ -10,7 +10,7 @@ from django.contrib.auth.models import AbstractUser
 class User(AbstractUser):
     email = models.EmailField(unique=True)
 
-    USERNAME_FIELD = "email" # you can login with email address
+    USERNAME_FIELD = "email"  # you can login with email address
     REQUIRED_FIELDS = ["username"]
 
     def __str__(self):
