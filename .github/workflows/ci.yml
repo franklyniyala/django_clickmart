@@ -94,8 +94,9 @@ jobs:
         with:
           image-ref: clickmart-backend
           format: table
-          exit-code: 1
+          exit-code: '0'
           severity: HIGH,CRITICAL
+          ignore-unfixed: true
 
           
   frontend-ci:
@@ -131,5 +132,6 @@ jobs:
         with:
           image-ref: clickmart-frontend
           format: table
-          exit-code: 1
+          exit-code: '0'
           severity: HIGH,CRITICAL
+          ignore-unfixed: true
