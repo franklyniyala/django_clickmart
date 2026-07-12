@@ -5,10 +5,6 @@ on:
       - franklyn
       - main
 
-concurrency:
-  group: clickmart-${{ github.ref }}
-  cancel-in-progress: true
-
 permissions:
   contents: read
 
@@ -64,7 +60,6 @@ jobs:
             -t clickmart-backend:latest .
 
   frontend-ci:
-    needs: backend-ci
     
     runs-on: self-hosted
     
