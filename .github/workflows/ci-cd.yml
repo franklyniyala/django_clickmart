@@ -53,12 +53,6 @@ jobs:
       - name: Run Tests
         run: python manage.py test
 
-      - name: Build Backend Docker Image
-        run: |
-          docker build \
-            --cache-from clickmart-backend:latest \
-            -t clickmart-backend:latest .
-
   frontend-ci:
     
     runs-on: self-hosted
@@ -82,12 +76,6 @@ jobs:
         run: npm ci --prefer-offline --no-audit
 
 
-      - name: Build Frontend Docker Image
-        run: |
-          docker build \
-           --cache-from clickmart-frontend:latest \
-           -t clickmart-frontend:latest .
-
   sonar-analysis:
     name: SonarQube Analysis
     needs: 
@@ -108,11 +96,33 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
+  docker-build:
+    name: Build Docker Images
+    runs-on: self-hosted
+
+    needs: sonar-analysis
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build Backend
+      run: |
+        docker build \
+          -t clickmart-backend:latest \
+          -t clickmart-backend:${{ github.sha }} \
+          ./backend-drf
+
+    - name: Build Frontend
+      run: |
+        docker build \
+          -t clickmart-frontend:latest \
+          -t clickmart-frontend:${{ github.sha }} \
+          ./frontend
+
   trivy-scan:
     name: Trivy Scan
     needs:
-      - frontend-ci
-      - backend-ci
+      - docker-build
 
     runs-on: self-hosted
 
@@ -140,42 +150,44 @@ jobs:
           severity: HIGH,CRITICAL
 
   docker-push:
-    name: Push Images to Docker Hub
+    name: Push Images
+
     runs-on: self-hosted
 
     needs: trivy-scan
 
-    if: github.ref == 'refs/heads/franklyn'
-
     steps:
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Tag Backend Image
-        run: |
-          docker tag clickmart-backend:latest \
-            ${{ secrets.DOCKER_USERNAME }}/clickmart-backend:latest
+    - uses: actions/checkout@v4
 
-          docker tag clickmart-backend:${{ github.sha }} \
-            ${{ secrets.DOCKER_USERNAME }}/clickmart-backend:${{ github.sha }}
+    - name: Login
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Push Backend Image
-        run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/clickmart-backend:latest
-          docker push ${{ secrets.DOCKER_USERNAME }}/clickmart-backend:${{ github.sha }}
+    - name: Tag Backend
+      run: |
+        docker tag clickmart-backend:latest \
+        ${{ secrets.DOCKER_USERNAME }}/clickmart-backend:latest
 
-      - name: Tag Frontend Image
-        run: |
-          docker tag clickmart-frontend:latest \
-            ${{ secrets.DOCKER_USERNAME }}/clickmart-frontend:latest
+        docker tag clickmart-backend:${{ github.sha }} \
+        ${{ secrets.DOCKER_USERNAME }}/clickmart-backend:${{ github.sha }}
 
-          docker tag clickmart-frontend:${{ github.sha }} \
-            ${{ secrets.DOCKER_USERNAME }}/clickmart-frontend:${{ github.sha }}
+    - name: Push Backend
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/clickmart-backend:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/clickmart-backend:${{ github.sha }}
 
-      - name: Push Frontend Image
-        run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/clickmart-frontend:latest
-          docker push ${{ secrets.DOCKER_USERNAME }}/clickmart-frontend:${{ github.sha }}
+    - name: Tag Frontend
+      run: |
+        docker tag clickmart-frontend:latest \
+        ${{ secrets.DOCKER_USERNAME }}/clickmart-frontend:latest
+
+        docker tag clickmart-frontend:${{ github.sha }} \
+        ${{ secrets.DOCKER_USERNAME }}/clickmart-frontend:${{ github.sha }}
+
+    - name: Push Frontend
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/clickmart-frontend:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/clickmart-frontend:${{ github.sha }}

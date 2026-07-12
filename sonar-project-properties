@@ -1,0 +1,13 @@
+sonar.projectKey=clickmart
+sonar.projectName=ClickMart
+sonar.projectVersion=1.0
+
+sonar.sources=backend-drf,frontend
+
+sonar.sourceEncoding=UTF-8
+
+sonar.python.version=3.11
+
+sonar.exclusions=**/node_modules/**,**/venv/**,**/__pycache__/**,**/dist/**,**/build/**,**/migrations/**
+
+sonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
