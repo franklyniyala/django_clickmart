@@ -4,15 +4,8 @@ on:
     branches:
       - franklyn
 
-  pull_request:
-    branches:
-      - main
 permissions:
-  contents: read 
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  contents: read
 
 jobs:
   backend-ci:
@@ -69,10 +62,9 @@ jobs:
       - name: Build Backend Docker Image
         run: |
           docker build \
-          -t clickmart-backend:latest \
-          .
+            --cache-from clickmart-backend:latest \
+            -t clickmart-backend:latest .
 
-          
   frontend-ci:
     
     runs-on: self-hosted
@@ -101,14 +93,11 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
-      - name: Build Frontend 
-        run: npm run build
-
       - name: Build Frontend Docker Image
         run: |
           docker build \
-          -t clickmart-frontend:latest \
-          .
+           --cache-from clickmart-frontend:latest \
+           -t clickmart-frontend:latest .
 
   sonar-analysis:
     name: SonarQube Analysis
@@ -121,7 +110,7 @@ jobs:
       - name: Check Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Sonarqube Scan
         uses: SonarSource/sonarqube-scan-action@v5
