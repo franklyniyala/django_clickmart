@@ -18,7 +18,10 @@ jobs:
   backend-ci:
 
     runs-on: self-hosted
-    
+
+    env:
+      DOCKER_BUILDKIT: 1
+
     defaults:
       run:
         working-directory: backend-drf
@@ -27,6 +30,8 @@ jobs:
 
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Install PostgreSQL Client
         run: | 
@@ -43,21 +48,13 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install --prefer-binary -r requirements.txt
 
       - name: Run Flake8
         run: flake8 .
 
       - name: Create CI environment
         run: cp .env.ci .env
-
-      - name: Wait for Postgres
-        run: |
-          until pg_isready -h localhost -p 5432 -U postgres
-            do
-              echo "Waiting for Postgres..."
-              sleep 2
-            done
 
       - name: Run Migrations
         run: |
@@ -69,22 +66,19 @@ jobs:
       - name: Run Tests
         run: python manage.py test
 
-      - name: Build Docker Image
-        run: docker build -t clickmart-backend .
-
-      - name: Scan Backend Image for Vulnerabilities
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: clickmart-backend
-          format: table
-          exit-code: '0'
-          severity: HIGH,CRITICAL
-          ignore-unfixed: true
+      - name: Build Backend Docker Image
+        run: |
+          docker build \
+          -t clickmart-backend:latest \
+          .
 
           
   frontend-ci:
     
     runs-on: self-hosted
+    
+    env:
+      DOCKER_BUILDKIT: 1
 
     defaults:
       run:
@@ -93,34 +87,31 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
 
       - name: Install Packages
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Run ESLint
+        run: npm run lint
 
       - name: Build Frontend 
         run: npm run build
 
-      - name: Build Docker Image
-        run: docker build -t clickmart-frontend .
-
-      - name: Scan Frontend Image for Vulnerabilities
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: clickmart-frontend
-          format: table
-          exit-code: '0'
-          severity: HIGH,CRITICAL
-          ignore-unfixed: true
+      - name: Build Frontend Docker Image
+        run: |
+          docker build \
+          -t clickmart-frontend:latest \
+          .
 
   sonar-analysis:
-    name: SonarQube Aanalysis
+    name: SonarQube Analysis
     needs: 
       - frontend-ci
       - backend-ci
@@ -129,6 +120,8 @@ jobs:
     steps:
       - name: Check Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Sonarqube Scan
         uses: SonarSource/sonarqube-scan-action@v5
@@ -137,3 +130,33 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
+  trivy-scan:
+    name: Trivy Scan
+    needs:
+      - frontend-ci
+      - backend-ci
+
+    runs-on: self-hosted
+
+    steps:
+      - name: Check Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Scan Backend Image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: clickmart-backend:latest
+          format: table
+          exit-code: "0"
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+
+      - name: Scan Frontend Image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: clickmart-frontend:latest
+          format: table
+          exit-code: "0"
+          severity: HIGH,CRITICAL
