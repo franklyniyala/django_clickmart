@@ -89,8 +89,16 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Verify SonarQube connectivity
+        env:
+        
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+            echo "Checking SonarQube..."
+            curl -v "$SONAR_HOST_URL/api/system/status"
+
       - name: Sonarqube Scan
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarqube-scan-action@v6
 
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
