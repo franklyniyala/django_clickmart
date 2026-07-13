@@ -1,19 +1,20 @@
-name: Continuous Integration
+name: Clickmart CI/CD Pipeline
 on:
   push:
     branches:
       - franklyn
+      - main
 
 permissions:
   contents: read
+
+env: 
+  DOCKER_BUILDKIT: 1
 
 jobs:
   backend-ci:
 
     runs-on: self-hosted
-
-    env:
-      DOCKER_BUILDKIT: 1
 
     defaults:
       run:
@@ -26,17 +27,10 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Install PostgreSQL Client
-        run: | 
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: pip
-          cache-dependency-path: backend-drf/requirements.txt
 
       - name: Install dependencies
         run: |
@@ -59,19 +53,10 @@ jobs:
       - name: Run Tests
         run: python manage.py test
 
-      - name: Build Backend Docker Image
-        run: |
-          docker build \
-            --cache-from clickmart-backend:latest \
-            -t clickmart-backend:latest .
-
   frontend-ci:
     
     runs-on: self-hosted
     
-    env:
-      DOCKER_BUILDKIT: 1
-
     defaults:
       run:
         working-directory: frontend
@@ -90,14 +75,6 @@ jobs:
       - name: Install Packages
         run: npm ci --prefer-offline --no-audit
 
-      - name: Run ESLint
-        run: npm run lint
-
-      - name: Build Frontend Docker Image
-        run: |
-          docker build \
-           --cache-from clickmart-frontend:latest \
-           -t clickmart-frontend:latest .
 
   sonar-analysis:
     name: SonarQube Analysis
@@ -110,7 +87,7 @@ jobs:
       - name: Check Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Sonarqube Scan
         uses: SonarSource/sonarqube-scan-action@v5
@@ -119,11 +96,33 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
+  docker-build:
+    name: Build Docker Images
+    runs-on: self-hosted
+
+    needs: sonar-analysis
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build Backend
+      run: |
+        docker build \
+          -t clickmart-backend:latest \
+          -t clickmart-backend:${{ github.sha }} \
+          ./backend-drf
+
+    - name: Build Frontend
+      run: |
+        docker build \
+          -t clickmart-frontend:latest \
+          -t clickmart-frontend:${{ github.sha }} \
+          ./frontend
+
   trivy-scan:
     name: Trivy Scan
     needs:
-      - frontend-ci
-      - backend-ci
+      - docker-build
 
     runs-on: self-hosted
 
@@ -149,3 +148,46 @@ jobs:
           format: table
           exit-code: "0"
           severity: HIGH,CRITICAL
+
+  docker-push:
+    name: Push Images
+
+    runs-on: self-hosted
+
+    needs: trivy-scan
+
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - name: Login
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Tag Backend
+      run: |
+        docker tag clickmart-backend:latest \
+        ${{ secrets.DOCKER_USERNAME }}/clickmart-backend:latest
+
+        docker tag clickmart-backend:${{ github.sha }} \
+        ${{ secrets.DOCKER_USERNAME }}/clickmart-backend:${{ github.sha }}
+
+    - name: Push Backend
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/clickmart-backend:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/clickmart-backend:${{ github.sha }}
+
+    - name: Tag Frontend
+      run: |
+        docker tag clickmart-frontend:latest \
+        ${{ secrets.DOCKER_USERNAME }}/clickmart-frontend:latest
+
+        docker tag clickmart-frontend:${{ github.sha }} \
+        ${{ secrets.DOCKER_USERNAME }}/clickmart-frontend:${{ github.sha }}
+
+    - name: Push Frontend
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/clickmart-frontend:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/clickmart-frontend:${{ github.sha }}
