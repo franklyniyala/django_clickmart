@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: backend-configmap
+  namespace: clickmart
+
+data:
+  DB_HOST: postgres
+  DB_PORT: "5432"
+  DB_NAME: clickmart
+  DEBUG: "False"
+  ALLOWED_HOSTS: "localhost,127.0.0.1,0.0.0.0,backend,backend-service,clickmart_backend,clickmart.local"

@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment 
+
+metadata:
+  name: frontend-deployment
+  namespace: clickmart 
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: frontend
+
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: ekenefranklyn/clickmart-frontend:latest
+          imagePullPolicy: Always
+
+          env:
+          - name: BACKEND_HOST
+            value: "backend"
+
+          ports:
+            - containerPort: 80
+
+          resources:
+            requests:
+              memory: "250Mi"
+              cpu: "256m"
+                
+            limits:
+              memory: "500Mi"
+              cpu: "512m"
+
+      

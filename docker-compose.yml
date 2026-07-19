@@ -37,7 +37,8 @@ services:
     image: clickmart_frontend:latest
     container_name: clickmart_frontend
     environment:
-      - REACT_APP_API_URL=http://localhost:8001
+      BACKEND_HOST: backend
+      REACT_APP_API_URL: http://localhost:8001
     ports:
       - "80:80"
     volumes:
