@@ -34,12 +34,14 @@ SECRET_KEY = config("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = get_list(
+ALLOWED_HOSTS = ["*"] if not DEBUG else get_list(
     config(
-        "ALLOWED_HOSTS", default="localhost,127.0.0.1,0.0.0.0,backend,clickmart_backend"
+        "ALLOWED_HOSTS",
+        default="localhost,127.0.0.1,0.0.0.0,backend,clickmart_backend,clickmart.local",
     ),
     [],
 )
+
 CSRF_TRUSTED_ORIGINS = get_list(
     config(
         "CSRF_TRUSTED_ORIGINS",
