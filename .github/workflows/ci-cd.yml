@@ -202,15 +202,44 @@ jobs:
         docker push ${{ secrets.DOCKER_USERNAME }}/clickmart-frontend:latest
         docker push ${{ secrets.DOCKER_USERNAME }}/clickmart-frontend:${{ github.sha }}
 
-  kubernetes-test: 
-      name: Test Kubernetes Access
+  kubernetes-deployment: 
+      name: Deploy to Kubernetes
       runs-on: self-hosted
 
       needs: docker-push
 
       steps: 
-        - name: Test Cluster
+        - name: Checkout Repository
+          uses: actions/checkout@v4
+
+        - name: Verify Kubernetes Cluster
           run: |
             kubectl cluster-info
             kubectl get nodes
             kubectl get ns
+
+        - name: Make Script Executable
+          run: chmod +x K8s/deploy.sh
+
+        - name: Deploy Application
+          run: ./K8s/deploy.sh
+
+        - name: Update Frontend Image
+          run: |
+            kubectl set image deployment/frontend-deployment \
+            frontend=${{ secrets.DOCKER_USERNAME }}/clickmart-frontend:${{ github.sha }} \
+            -n clickmart
+
+        - name: Update Backend Image
+          run: |
+            kubectl set image deployment/backend-deployment \
+            backend=${{ secrets.DOCKER_USERNAME }}/clickmart-backend:${{ github.sha }} \
+            -n clickmart
+
+        - name: Wait for Backend Rollout
+          run: |
+            kubectl rollout status deployment/backend-deployment -n clickmart --timeout=180s
+
+        - name: Wait for Frontend Rollout
+          run: |
+            kubectl rollout status deployment/frontend-deployment -n clickmart --timeout=180s
