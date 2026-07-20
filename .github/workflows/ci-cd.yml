@@ -201,3 +201,16 @@ jobs:
       run: |
         docker push ${{ secrets.DOCKER_USERNAME }}/clickmart-frontend:latest
         docker push ${{ secrets.DOCKER_USERNAME }}/clickmart-frontend:${{ github.sha }}
+
+  kubernetes-test: 
+      name: Test Kubernetes Access
+      runs-on: self-hosted
+
+      needs: docker-push
+
+      steps: 
+        - name: Test Cluster
+          run: |
+            kubectl cluster-info
+            kubectl get nodes
+            kubectl get ns
