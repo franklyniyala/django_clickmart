@@ -1,0 +1,89 @@
+name: Clickmart CI (Pull Request Checks)
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  backend-ci:
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: backend-drf
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install --prefer-binary -r requirements.txt
+
+      - name: Run Flake8
+        run: flake8 .
+
+      - name: Create CI environment
+        run: cp .env.ci .env
+
+      - name: Run Migrations
+        run: python manage.py migrate
+
+      - name: Django system check
+        run: python manage.py check
+
+      - name: Run Tests
+        run: python manage.py test
+
+  frontend-ci:
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Packages
+        run: npm ci --prefer-offline --no-audit
+
+  sonar-analysis:
+    name: SonarQube Analysis
+    needs:
+      - frontend-ci
+      - backend-ci
+    runs-on: self-hosted
+    steps:
+      - name: Check Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Verify SonarQube connectivity
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          echo "Checking SonarQube..."
+          curl -v "$SONAR_HOST_URL/api/system/status"
+
+      - name: Sonarqube Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
