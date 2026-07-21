@@ -1,8 +1,7 @@
-name: Clickmart CI/CD Pipeline
+name: Clickmart CD Pipeline
 on:
   push:
     branches:
-      - franklyn
       - main
 
 permissions:
@@ -12,103 +11,10 @@ env:
   DOCKER_BUILDKIT: 1
 
 jobs:
-  backend-ci:
-
-    runs-on: self-hosted
-
-    defaults:
-      run:
-        working-directory: backend-drf
-
-    steps:
-
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install --prefer-binary -r requirements.txt
-
-      - name: Run Flake8
-        run: flake8 .
-
-      - name: Create CI environment
-        run: cp .env.ci .env
-
-      - name: Run Migrations
-        run: |
-          python manage.py migrate
-
-      - name: Django system check
-        run: python manage.py check
-
-      - name: Run Tests
-        run: python manage.py test
-
-  frontend-ci:
-    
-    runs-on: self-hosted
-    
-    defaults:
-      run:
-        working-directory: frontend
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Install Packages
-        run: npm ci --prefer-offline --no-audit
-
-
-  sonar-analysis:
-    name: SonarQube Analysis
-    needs: 
-      - frontend-ci
-      - backend-ci
-    runs-on: self-hosted
-
-    steps:
-      - name: Check Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      - name: Verify SonarQube connectivity
-        env:
-        
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: |
-            echo "Checking SonarQube..."
-            curl -v "$SONAR_HOST_URL/api/system/status"
-
-      - name: Sonarqube Scan
-        uses: SonarSource/sonarqube-scan-action@v6
-
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-
   docker-build:
     name: Build Docker Images
-    runs-on: self-hosted
 
-    needs: sonar-analysis
+    runs-on: self-hosted
 
     steps:
     - uses: actions/checkout@v4
@@ -202,15 +108,44 @@ jobs:
         docker push ${{ secrets.DOCKER_USERNAME }}/clickmart-frontend:latest
         docker push ${{ secrets.DOCKER_USERNAME }}/clickmart-frontend:${{ github.sha }}
 
-  kubernetes-test: 
-      name: Test Kubernetes Access
+  kubernetes-deployment: 
+      name: Deploy to Kubernetes
       runs-on: self-hosted
 
       needs: docker-push
 
       steps: 
-        - name: Test Cluster
+        - name: Checkout Repository
+          uses: actions/checkout@v4
+
+        - name: Verify Kubernetes Cluster
           run: |
             kubectl cluster-info
             kubectl get nodes
             kubectl get ns
+
+        - name: Make Script Executable
+          run: chmod +x K8s/deploy.sh
+
+        - name: Deploy Application
+          run: ./K8s/deploy.sh
+
+        - name: Update Frontend Image
+          run: |
+            kubectl set image deployment/frontend-deployment \
+            frontend=${{ secrets.DOCKER_USERNAME }}/clickmart-frontend:${{ github.sha }} \
+            -n clickmart
+
+        - name: Update Backend Image
+          run: |
+            kubectl set image deployment/backend-deployment \
+            backend=${{ secrets.DOCKER_USERNAME }}/clickmart-backend:${{ github.sha }} \
+            -n clickmart
+
+        - name: Wait for Backend Rollout
+          run: |
+            kubectl rollout status deployment/backend-deployment -n clickmart --timeout=180s
+
+        - name: Wait for Frontend Rollout
+          run: |
+            kubectl rollout status deployment/frontend-deployment -n clickmart --timeout=180s
