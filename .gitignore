@@ -252,4 +252,4 @@ Thumbs.db
 # Test coverage
 coverage.xml
 .coverage
-htmlcov/
+htmlcov/backend-drf/coverage.xml
