@@ -12,18 +12,26 @@ urlpatterns = [
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("profile/", UserViews.ProfileView.as_view()),
     # Products APIs
-    # product list
     path("products/", ProductViews.ProductListView.as_view()),
-    # product detail
     path("products/<int:pk>/", ProductViews.ProductDetailView.as_view()),
     # Cart API
     path("cart/", CartViews.CartView.as_view()),
-    # Add to Cart
     path("cart/add/", CartViews.AddToCartView.as_view()),
-    # Manage Cart
     path("cart/items/<int:item_id>/", CartViews.ManageCartItemView.as_view()),
     # Orders
-    path("orders/place/", OrderViews.PlaceOrderView.as_view()),
-    path("orders/", OrderViews.MyOrdersView.as_view()),
-    path("orders/<int:pk>/", OrderViews.OrderDetailView.as_view()),
+    path(
+        "orders/place/",
+        OrderViews.PlaceOrderView.as_view(),
+        name="place_order",
+    ),
+    path(
+        "orders/",
+        OrderViews.MyOrdersView.as_view(),
+        name="my_orders",
+    ),
+    path(
+        "orders/<int:pk>/",
+        OrderViews.OrderDetailView.as_view(),
+        name="order_detail",
+    ),
 ]

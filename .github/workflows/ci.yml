@@ -48,6 +48,12 @@ jobs:
           coverage xml 
           coverage report
 
+      - name: Upload Backend Coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend-drf/coverage.xml
+
   frontend-ci:
     runs-on: self-hosted
     defaults:
@@ -79,6 +85,18 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Download Backend Coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend-drf
+
+      - name: Verify Coverage Report
+        run: |
+          ls -lh backend-drf/coverage.xml
+          head -n 2 backend-drf/coverage.xml
+
+
       - name: Verify SonarQube connectivity
         env:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -91,3 +109,5 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      
