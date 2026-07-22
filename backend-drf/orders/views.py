@@ -46,9 +46,7 @@ class PlaceOrderView(APIView):
                 )
 
             # Decrease the product quantity
-            product.stock -= (
-                item.quantity
-            )  # product.stock = product.stock - item.quantity
+            product.stock -= item.quantity
             product.save()
 
         # create order items

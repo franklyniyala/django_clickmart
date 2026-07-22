@@ -39,7 +39,6 @@ class AddToCartView(APIView):
         item, created = CartItem.objects.get_or_create(cart=cart, product=product)
 
         if not created:  # cart item already exist
-            # item.quantity = item.quantity + quantity
             item.quantity += int(quantity)
             item.save()
 
