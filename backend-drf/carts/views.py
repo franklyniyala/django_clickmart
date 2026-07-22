@@ -60,7 +60,7 @@ class ManageCartItemView(APIView):
         product = item.product
 
         # for adding, check the stock
-        if change > 0:  # change = 1
+        if change > 0:  
             if item.quantity + change > product.stock:
                 return Response({"error": "Not enough stock"})
 

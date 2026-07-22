@@ -1,4 +1,4 @@
-import { X, Hash, Calendar, DollarSign, Package, MapPin } from "lucide-react";
+import { Hash, Calendar, MapPin } from "lucide-react";
 import { useAxios } from "../hooks/useAxios";
 import useAuth from "../hooks/useAuth";
 import { useEffect, useState } from "react";
@@ -6,13 +6,15 @@ import { useEffect, useState } from "react";
 const OrderDetail = ({ orderId, isOpen, onClose }) => {
 
     const [order, setOrder] = useState(null)
-    const [loading, setLoading] = useState(false)
+    const [, setLoading] = useState(false)
     
      const { api } = useAxios();
      const { auth } = useAuth();
 
      useEffect(() => {
-        if (!orderId) return
+        if (!orderId) {
+          return;
+        }
        const fetchOrders = async () => {
          try {
            setLoading(true);

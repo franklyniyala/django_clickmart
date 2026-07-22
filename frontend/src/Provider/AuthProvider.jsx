@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AuthContext } from "../context";
 
 const AuthProvider = ({ children }) => {
@@ -7,7 +7,9 @@ const AuthProvider = ({ children }) => {
     refreshToken: localStorage.getItem("refreshToken"),
   });
 
-  return <AuthContext.Provider value={{ auth, setAuth }}>{children}</AuthContext.Provider>;
+  const value = useMemo(() => ({ auth, setAuth }), [auth]);
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export default AuthProvider;

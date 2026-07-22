@@ -3,7 +3,6 @@ import {
   CheckCircle,
   Clock,
   Eye,
-  FileText,
   Package,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -83,6 +82,92 @@ const Orders = () => {
     }
   };
 
+  const renderOrdersList = () => {
+    if (loading) {
+      return (
+        <div className="text-center py-5">
+          <div className="spinner-border text-primary" role="status"></div>
+        </div>
+      );
+    }
+
+    if (orders.length === 0) {
+      return (
+        <div className="text-center py-5 border rounded-4 bg-white">
+          <Package size={40} className="text-muted mb-2 opacity-25" />
+          <p className="text-muted mb-0">No orders found in your account.</p>
+        </div>
+      );
+    }
+
+    return orders.map((order) => {
+      const config = getStatusConfig(order.status);
+      return (
+        <div
+          key={order.id}
+          className="card border-0 shadow-sm transition-hover"
+          style={{
+            borderLeft: `6px solid ${config.accent}`,
+            borderRadius: "12px",
+          }}
+        >
+          <div className="card-body p-4">
+            <div className="row align-items-center">
+              <div className="col-md-3">
+                <h6 className="text-primary fw-bold mb-1">
+                  #{order.id}
+                </h6>
+                <span className="text-muted small">
+                  {new Date(order.created_at).toLocaleDateString("en-GB")}
+                </span>
+              </div>
+
+              <div className="col-md-4 py-3 py-md-0">
+                <div className="d-flex align-items-center gap-4">
+                  <div>
+                    <small className="text-muted d-block">
+                      Total Amount
+                    </small>
+                    <span className="fw-bold fs-5">
+                      ${order.grand_total}
+                    </span>
+                  </div>
+                  <div className="text-muted small">
+                    <small className="d-block">Tax</small>
+                    <span>${order.tax_amount}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="col-md-2 mb-3 mb-md-0">
+                <span
+                  className="badge d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill"
+                  style={{
+                    backgroundColor: config.bg,
+                    color: config.text,
+                    border: `1px solid ${config.border}`,
+                    fontWeight: "600",
+                  }}
+                >
+                  {config.icon} {order.status}
+                </span>
+              </div>
+
+              <div className="col-md-3">
+                <div className="d-flex gap-2 justify-content-md-end">
+                  <button className="btn btn-primary roidunded-pill px-3 py-2 d-flex align-items-center gap-2 shadow-sm" onClick={() => handleOpenModal(order?.id)}>
+                    <Eye size={16} /> Details
+                  </button>
+                 
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    });
+  };
+
   return (
     <div className="col-lg-9 py-4 px-md-4">
       <div className="mb-4">
@@ -93,83 +178,7 @@ const Orders = () => {
       </div>
 
       <div className="d-grid gap-3">
-        {loading ? (
-          <div className="text-center py-5">
-            <div className="spinner-border text-primary" role="status"></div>
-          </div>
-        ) : orders.length > 0 ? (
-          orders.map((order) => {
-            const config = getStatusConfig(order.status);
-            return (
-              <div
-                key={order.id}
-                className="card border-0 shadow-sm transition-hover"
-                style={{
-                  borderLeft: `6px solid ${config.accent}`,
-                  borderRadius: "12px",
-                }}
-              >
-                <div className="card-body p-4">
-                  <div className="row align-items-center">
-                    <div className="col-md-3">
-                      <h6 className="text-primary fw-bold mb-1">
-                        #{order.id}
-                      </h6>
-                      <span className="text-muted small">
-                        {new Date(order.created_at).toLocaleDateString("en-GB")}
-                      </span>
-                    </div>
-
-                    <div className="col-md-4 py-3 py-md-0">
-                      <div className="d-flex align-items-center gap-4">
-                        <div>
-                          <small className="text-muted d-block">
-                            Total Amount
-                          </small>
-                          <span className="fw-bold fs-5">
-                            ${order.grand_total}
-                          </span>
-                        </div>
-                        <div className="text-muted small">
-                          <small className="d-block">Tax</small>
-                          <span>${order.tax_amount}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="col-md-2 mb-3 mb-md-0">
-                      <span
-                        className="badge d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill"
-                        style={{
-                          backgroundColor: config.bg,
-                          color: config.text,
-                          border: `1px solid ${config.border}`,
-                          fontWeight: "600",
-                        }}
-                      >
-                        {config.icon} {order.status}
-                      </span>
-                    </div>
-
-                    <div className="col-md-3">
-                      <div className="d-flex gap-2 justify-content-md-end">
-                        <button className="btn btn-primary roidunded-pill px-3 py-2 d-flex align-items-center gap-2 shadow-sm" onClick={() => handleOpenModal(order?.id)}>
-                          <Eye size={16} /> Details
-                        </button>
-                       
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })
-        ) : (
-          <div className="text-center py-5 border rounded-4 bg-white">
-            <Package size={40} className="text-muted mb-2 opacity-25" />
-            <p className="text-muted mb-0">No orders found in your account.</p>
-          </div>
-        )}
+        {renderOrdersList()}
       </div>
       <OrderDetail 
         orderId={selectedOrder} 
