@@ -29,7 +29,9 @@ const OrderDetail = ({ orderId, isOpen, onClose }) => {
        if (auth.accessToken) fetchOrders();
      }, [api, auth.accessToken, orderId]);
 
-if (!order) return null;
+    if (!order) {
+      return null;
+    }
 
     return (
         <>
