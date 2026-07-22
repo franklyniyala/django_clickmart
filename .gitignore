@@ -248,3 +248,8 @@ frontend/.env
 # OS
 .DS_Store
 Thumbs.db
+
+# Test coverage
+coverage.xml
+.coverage
+htmlcov/backend-drf/coverage.xml
