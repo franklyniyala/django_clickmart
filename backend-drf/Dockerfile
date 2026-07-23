@@ -1,9 +1,9 @@
 FROM python:3.11-slim
 
-WORKDIR /app
-
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
+
+WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
     gcc \
@@ -16,10 +16,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+RUN useradd --create-home --shell /bin/bash appuser
 
-RUN chmod +x /app/entrypoint.sh
+COPY --chown=appuser:appuser . .
 
-EXPOSE 8000
+USER appuser
 
-ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["./entrypoint.sh"]

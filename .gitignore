@@ -253,3 +253,4 @@ Thumbs.db
 coverage.xml
 .coverage
 htmlcov/backend-drf/coverage.xml
+
