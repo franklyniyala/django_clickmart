@@ -1,4 +1,5 @@
 name: Clickmart CI (Pull Request Checks)
+
 on:
   pull_request:
     branches:
@@ -8,12 +9,20 @@ permissions:
   contents: read
 
 jobs:
+
+  # ==========================================
+  # BACKEND CI
+  # ==========================================
   backend-ci:
+    name: Backend CI
     runs-on: self-hosted
+
     defaults:
       run:
         working-directory: backend-drf
+
     steps:
+
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
@@ -24,42 +33,44 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install --prefer-binary -r requirements.txt
-          pip install coverage 
+          pip install coverage flake8
 
       - name: Run Flake8
         run: flake8 .
 
-      - name: Create CI environment
+      - name: Create CI Environment
         run: cp .env.ci .env
 
       - name: Run Migrations
         run: python manage.py migrate
 
-      - name: Django system check
+      - name: Django System Check
         run: python manage.py check
 
-      - name: Run Tests with Coverage
-        run: | 
+      - name: Run Backend Tests with Coverage
+        run: |
           coverage run manage.py test
-          coverage xml 
-          coverage report
+          coverage xml
+          coverage report -m
 
-      - name: Upload Backend Coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-coverage
-          path: backend-drf/coverage.xml
 
+  # ==========================================
+  # FRONTEND CI
+  # ==========================================
   frontend-ci:
+    name: Frontend CI
     runs-on: self-hosted
+
     defaults:
       run:
         working-directory: frontend
+
     steps:
+
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
@@ -69,45 +80,100 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install Packages
         run: npm ci --prefer-offline --no-audit
 
+      - name: Run Frontend Tests with Coverage
+        run: npm run test -- --coverage
+
+      - name: Build Frontend
+        run: npm run build
+
+
+  # ==========================================
+  # SONARQUBE ANALYSIS
+  # ==========================================
   sonar-analysis:
     name: SonarQube Analysis
+
     needs:
       - frontend-ci
       - backend-ci
+
     runs-on: self-hosted
+
     steps:
-      - name: Check Repository
+
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Download Backend Coverage
-        uses: actions/download-artifact@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          name: backend-coverage
-          path: backend-drf
+          python-version: "3.11"
 
-      - name: Verify Coverage Report
+      - name: Install Backend Dependencies
+        working-directory: backend-drf
         run: |
+          python -m pip install --upgrade pip
+          pip install --prefer-binary -r requirements.txt
+          pip install coverage
+
+      - name: Create CI Environment
+        working-directory: backend-drf
+        run: cp .env.ci .env
+
+      - name: Generate Backend Coverage Report
+        working-directory: backend-drf
+        run: |
+          coverage run manage.py test
+          coverage xml
+          coverage report -m
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        working-directory: frontend
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Generate Frontend Coverage Report
+        working-directory: frontend
+        run: npm run test -- --coverage
+
+      - name: Verify Coverage Reports
+        run: |
+          echo "Checking backend coverage report..."
           ls -lh backend-drf/coverage.xml
-          head -n 2 backend-drf/coverage.xml
 
+          echo "Checking frontend coverage report..."
+          ls -lh frontend/coverage/lcov.info
 
-      - name: Verify SonarQube connectivity
+      - name: Verify SonarQube Connectivity
         env:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
           echo "Checking SonarQube..."
-          curl -v "$SONAR_HOST_URL/api/system/status"
+          curl -f "$SONAR_HOST_URL/api/system/status"
 
-      - name: Sonarqube Scan
+      - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
+      - name: SonarQube Quality Gate Check
+        uses: SonarSource/sonarqube-quality-gate-action@v1
+        timeout-minutes: 5
+        env:
+         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       
