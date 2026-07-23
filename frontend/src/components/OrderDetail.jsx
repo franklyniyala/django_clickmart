@@ -27,7 +27,7 @@ const OrderDetail = ({ orderId, isOpen, onClose }) => {
          }
        };
        if (auth.accessToken) fetchOrders();
-     }, [api, auth.accessToken, orderId]);
+     }, [auth.accessToken, orderId]); // eslint-disable-line react-hooks/exhaustive-deps
 
     if (!order) {
       return null;
