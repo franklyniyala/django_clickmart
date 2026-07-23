@@ -1,13 +1,12 @@
 import { LayoutDashboard, LogOut, Package } from "lucide-react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import useAuth from "../hooks/useAuth";
 
 const Sidebar = () => {
-  const location = useLocation();
   const navigate = useNavigate();
   const { dispatch } = useCart();
-  const { auth, setAuth } = useAuth();
+  const { setAuth } = useAuth();
   const menuItems = [
     { path: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { path: "/dashboard/orders", icon: Package, label: "My Orders" },

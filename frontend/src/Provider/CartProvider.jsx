@@ -1,4 +1,4 @@
-import { useReducer } from "react";
+import { useMemo, useReducer } from "react";
 import CartContext from "../context/CartContext";
 
 const cartReducer = (state, action) => {
@@ -29,8 +29,10 @@ const CartProvider = ({ children }) => {
     loading: false,
   });
 
+  const value = useMemo(() => ({ state, dispatch }), [state]);
+
   return (
-    <CartContext.Provider value={{ state, dispatch }}>
+    <CartContext.Provider value={value}>
       {children}
     </CartContext.Provider>
   );

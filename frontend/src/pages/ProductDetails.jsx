@@ -99,8 +99,7 @@ const ProductDetail = () => {
       });
     } catch (err) {
       console.error("Failed to add to cart:", err);
-      const errorMessage =
-        err.response?.data?.error || "Failed to add to cart.";
+      
     }
   };
 

@@ -100,8 +100,6 @@ const Checkout = () => {
       }
     } catch (error) {
       console.error("Order error:", error);
-      const errorMsg =
-        error.response?.data?.message || "Order placement failed";
     } finally {
       setIsProcessing(false);
     }
