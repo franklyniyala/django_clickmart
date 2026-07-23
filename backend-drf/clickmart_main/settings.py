@@ -45,7 +45,7 @@ ALLOWED_HOSTS = ["*"] if not DEBUG else get_list(
 CSRF_TRUSTED_ORIGINS = get_list(
     config(
         "CSRF_TRUSTED_ORIGINS",
-        default="http://localhost,http://127.0.0.1,http://localhost:80,http://127.0.0.1:80",
+        default="https://localhost,https://127.0.0.1,https://localhost:443,https://127.0.0.1:443",
     ),
     [],
 )
@@ -185,5 +185,5 @@ EMAIL_HOST_USER = config("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
+    "https://localhost:5173",
 ]
