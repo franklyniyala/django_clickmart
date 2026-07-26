@@ -18,7 +18,15 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 RUN useradd --create-home --shell /bin/bash appuser
 
-COPY --chown=appuser:appuser . .
+COPY --chown=appuser:appuser requirements.txt .
+COPY --chown=appuser:appuser manage.py .
+COPY --chown=appuser:appuser api ./api
+COPY --chown=appuser:appuser carts ./carts
+COPY --chown=appuser:appuser orders ./orders
+COPY --chown=appuser:appuser products ./products
+COPY --chown=appuser:appuser users ./users
+COPY --chown=appuser:appuser clickmart_main ./clickmart_main
+COPY --chown=appuser:appuser entrypoint.sh .
 
 USER appuser
 
