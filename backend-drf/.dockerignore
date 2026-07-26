@@ -1,24 +1,54 @@
-venv/
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
 *.pyd
 
-.git
-.gitignore
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
 
-.env
-
+# Django
+*.sqlite3
 db.sqlite3
-
+staticfiles/
 media/
 
-staticfiles/
+# Environment and secrets
+.env
+.env.*
+!.env.example
 
-pytest_cache/
-
+# Coverage and testing
 .coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+.coverage.*
 
+# Ruff / lint caches
+.ruff_cache/
+
+# Git
+.git/
+.gitignore
+
+# IDE / editors
 .vscode/
-
 .idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Documentation
+README.md
